@@ -1,12 +1,14 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = 'mongodb+srv://easy-user:easy-password@cluster0.txrndhh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-
+app.use(cors());
+app.use(express.json());
 // MongoDB connection
-const client = new MongoClient(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(MONGODB_URI);
 
 async function connectToMongoDB() {
     try {
@@ -25,16 +27,16 @@ app.get('/api/data', async (req, res) => {
         try {
             const db = client.db('poralekha-app');
             const collection = db.collection('students');
-    
+
             const page = parseInt(req.query.page) || 1;
             const perPage = 10;
             const skip = (page - 1) * perPage;
-    
+
             const totalItems = await collection.countDocuments();
             const totalPages = Math.ceil(totalItems / perPage);
-    
+
             const data = await collection.find().skip(skip).limit(perPage).toArray();
-    
+
             res.json({
                 page: page,
                 perPage: perPage,
@@ -57,6 +59,12 @@ app.get('/', async (req, res) => {
         msg: "success"
     });
 });
+
+// error handling
+app.use((err, req, res, next) => {
+    console.log(err)
+    res.status(500).send({ success: false, msg: "There was an error" })
+})
 
 // Start the server
 app.listen(PORT, () => {
