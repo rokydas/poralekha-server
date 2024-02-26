@@ -40,8 +40,8 @@ app.get('/api/data', async (req, res) => {
 
             res.json({
                 page: page,
-                perPage: perPage,
-                totalItems: totalItems,
+                perPageStudents: perPage,
+                totalStudents: totalItems,
                 totalPages: totalPages,
                 students: data
             });
