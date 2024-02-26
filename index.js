@@ -43,7 +43,7 @@ app.get('/api/data', async (req, res) => {
                 perPage: perPage,
                 totalItems: totalItems,
                 totalPages: totalPages,
-                data: data
+                students: data
             });
         } catch (error) {
             console.error('Error fetching data:', error);
