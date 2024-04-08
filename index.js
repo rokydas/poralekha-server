@@ -1,6 +1,7 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require("cors");
+const authHandler = require("./routes/auth");
 
 const app = express();
 require("dotenv").config();
@@ -8,19 +9,26 @@ const PORT = process.env.PORT || 3000;
 const MONGODB_URI = 'mongodb+srv://easy-user:easy-password@cluster0.txrndhh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 app.use(cors());
 app.use(express.json());
+const mongoose = require('mongoose');
 // MongoDB connection
 const client = new MongoClient(MONGODB_URI);
 
 async function connectToMongoDB() {
-    try {
-        await client.connect();
-        console.log('Connected to MongoDB Atlas');
-    } catch (error) {
-        console.error('Error connecting to MongoDB Atlas:', error);
-    }
+    mongoose.connect(MONGODB_URI);
+    const connection = mongoose.connection;
+    
+    connection.once('open', () => {
+        console.log('MongoDB database connection established successfully');
+    });
+    
+    connection.on('error', (err) => {
+        console.error('MongoDB connection error: ', err);
+    });
 }
 
 connectToMongoDB();
+
+app.use("/auth", authHandler);
 
 // API endpoint for fetching data with pagination
 app.get('/api/data', async (req, res) => {
