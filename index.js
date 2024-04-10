@@ -16,11 +16,11 @@ const client = new MongoClient(MONGODB_URI);
 async function connectToMongoDB() {
     mongoose.connect(MONGODB_URI);
     const connection = mongoose.connection;
-    
+
     connection.once('open', () => {
         console.log('MongoDB database connection established successfully');
     });
-    
+
     connection.on('error', (err) => {
         console.error('MongoDB connection error: ', err);
     });
@@ -70,11 +70,16 @@ app.get('/', async (req, res) => {
     });
 });
 
-// error handling
-app.use((err, req, res, next) => {
-    console.log(err)
-    res.status(500).send({ success: false, msg: "There was an error" })
-})
+const errorHandler = (err, req, res, next) => {
+    console.error('Error:', err);
+
+    res.status(500).json({
+        success: false,
+        error: 'Internal Server Error',
+    });
+};
+
+app.use(errorHandler);
 
 // Start the server
 app.listen(PORT, () => {

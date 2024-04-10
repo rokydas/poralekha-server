@@ -47,7 +47,11 @@ const verifyOtpValidation = (body) => {
 const updateProfileValidation = (body) => {
     const schema = Joi.object(
         {
-            name: Joi.string().required()
+            name: Joi.string().required(),
+            address: Joi.string().required(),
+            age: Joi.number().required(),
+            gender: Joi.string().required(),
+            img: Joi.string().required().allow(""),
         }
     )
     const {error} = schema.validate(body);

@@ -14,7 +14,6 @@ const generateOtp = () => {
 };
 
 const sendOtp = async (otp, recipient) => {
-    console.log(recipient, otp)
     try {
         const response = await axios.post('https://login.esms.com.bd/api/v3/sms/send', {
             recipient: `88${recipient}`,
@@ -27,8 +26,10 @@ const sendOtp = async (otp, recipient) => {
             }
         });
         console.log('SMS sent successfully: ', response.data);
+        return true;
     } catch (error) {
         console.error('Error sending SMS: ', error.response ? error.response.data : error.message);
+        return false;
     }
 }
 
@@ -62,15 +63,22 @@ router.post('/register', async (req, res) => {
             mobileNumber: req.body.mobileNumber
         });
         await otpDoc.save();
-        await sendOtp(otp, req.body.mobileNumber);
-        res.send({
-            success: true,
-            msg: "Registration successful",
-        })
-
+        const smsResult = await sendOtp(otp, req.body.mobileNumber);
+        if (smsResult) {
+            res.send({
+                success: true,
+                msg: "Registration successful",
+            })
+        } else {
+            await User.findOneAndDelete({ mobileNumber: req.body.mobileNumber })
+            res.status(500).send({
+                success: false,
+                msg: "Something went wrong. Please try again."
+            })
+        }
     } catch (err) {
         console.log(err)
-        res.status(400).send({
+        res.status(500).send({
             success: false,
             msg: "Something went wrong. Please try again."
         })
@@ -138,7 +146,7 @@ router.post('/verify-otp', async (req, res) => {
 })
 
 router.get("/me", verify, async (req, res) => {
-    const user = await User.findOne({ email: req.user.email, _id: req.user._id })
+    const user = await User.findOne({ _id: req.user._id })
     if (user) {
         res.send({
             success: true,
@@ -164,55 +172,23 @@ router.get("/all", verify, async (req, res) => {
     }
 })
 
-router.put('/update-profile/:id', verify, async (req, res) => {
-    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
-        try {
-            const error = updateProfileValidation(req.body)
-            if (error) return res.status(400).send({
-                success: false,
-                msg: error.details[0].message
-            })
-            User.findByIdAndUpdate(req.params.id, { $set: req.body }, () => {
-                res.send({
-                    success: true,
-                    msg: "Profile updated successfully"
-                })
-            })
-
-        } catch {
-            res.status(400).send({
-                success: false,
-                msg: "Something went wrong. Please try again"
-            })
-        }
-    } else {
-        res.status(400).send({
+router.put('/update-profile', verify, async (req, res) => {
+    try {
+        const error = updateProfileValidation(req.body)
+        if (error) return res.status(400).send({
             success: false,
-            msg: "Invalid Id"
+            msg: error.details[0].message
         })
-    }
-})
-
-router.patch('/change-role', verify, async (req, res) => {
-    console.log(req.body.userId, req.body.role)
-    if (mongoose.Types.ObjectId.isValid(req.body.userId)) {
-        try {
-            User.findByIdAndUpdate(req.body.userId, { $set: { isAdmin: req.body.isAdmin } }, () => {
-                res.send({
-                    success: true,
-                    msg: "Role updated successfully"
-                })
-            })
-        } catch {
-            res.status(400).send({
-                success: false,
-                msg: "Something went wrong. Please try again"
-            })
-        }
-    } else {
+        await User.findByIdAndUpdate(req.user._id, { $set: req.body })
+        res.send({
+            success: true,
+            msg: "Profile updated successfully"
+        })
+    } catch(err) {
+        console.log(err)
         res.status(400).send({
             success: false,
-            msg: "Invalid Id"
+            msg: "Something went wrong. Please try again"
         })
     }
 })
