@@ -36,7 +36,8 @@ const loginValidation = (body) => {
 const verifyOtpValidation = (body) => {
     const schema = Joi.object(
         {
-            otp: Joi.string().required()
+            otp: Joi.string().required(),
+            mobileNumber: Joi.string().required()
         }
     )
     const {error} = schema.validate(body);

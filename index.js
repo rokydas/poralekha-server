@@ -2,11 +2,11 @@ const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require("cors");
 const authHandler = require("./routes/auth");
-
+const otpHandler = require("./routes/otp");
 const app = express();
 require("dotenv").config();
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = 'mongodb+srv://easy-user:easy-password@cluster0.txrndhh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_URI = process.env.DB_CONNECT;
 app.use(cors());
 app.use(express.json());
 const mongoose = require('mongoose');
@@ -29,6 +29,7 @@ async function connectToMongoDB() {
 connectToMongoDB();
 
 app.use("/auth", authHandler);
+app.use("/otp", otpHandler);
 
 // API endpoint for fetching data with pagination
 app.get('/api/data', async (req, res) => {

@@ -1,10 +1,36 @@
 const router = require('express').Router()
 const User = require('../model/userSchema')
+const OTP = require('../model/otpSchema')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { registerValidation, loginValidation, updateProfileValidation, verifyOtpValidation } = require('../validation/authValidation')
 const verify = require('../verifyToken')
 const mongoose = require('mongoose')
+const axios = require('axios')
+
+const generateOtp = () => {
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    return otp.toString();
+};
+
+const sendOtp = async (otp, recipient) => {
+    console.log(recipient, otp)
+    try {
+        const response = await axios.post('https://login.esms.com.bd/api/v3/sms/send', {
+            recipient: `88${recipient}`,
+            sender_id: process.env.SENDER_ID,
+            type: 'plain',
+            message: `পড়ালেখা এপ এ OTP দিয়ে মোবাইল নাম্বার ভেরিফাই করে নিন। OTP: ${otp}`
+        }, {
+            headers: {
+                Authorization: `Bearer ${process.env.OTP_AUTH_TOKEN}`
+            }
+        });
+        console.log('SMS sent successfully: ', response.data);
+    } catch (error) {
+        console.error('Error sending SMS: ', error.response ? error.response.data : error.message);
+    }
+}
 
 router.post('/register', async (req, res) => {
 
@@ -30,10 +56,18 @@ router.post('/register', async (req, res) => {
     const user = new User({ ...req.body, password: hashedPassword })
     try {
         await user.save()
+        const otp = generateOtp();
+        const otpDoc = new OTP({
+            otp,
+            mobileNumber: req.body.mobileNumber
+        });
+        await otpDoc.save();
+        await sendOtp(otp, req.body.mobileNumber);
         res.send({
             success: true,
             msg: "Registration successful",
         })
+
     } catch (err) {
         console.log(err)
         res.status(400).send({
@@ -163,7 +197,7 @@ router.patch('/change-role', verify, async (req, res) => {
     console.log(req.body.userId, req.body.role)
     if (mongoose.Types.ObjectId.isValid(req.body.userId)) {
         try {
-            User.findByIdAndUpdate(req.body.userId, { $set: {isAdmin: req.body.isAdmin} }, () => {
+            User.findByIdAndUpdate(req.body.userId, { $set: { isAdmin: req.body.isAdmin } }, () => {
                 res.send({
                     success: true,
                     msg: "Role updated successfully"
