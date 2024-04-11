@@ -7,6 +7,7 @@ const { registerValidation, loginValidation, updateProfileValidation, verifyOtpV
 const verify = require('../verifyToken')
 const mongoose = require('mongoose')
 const axios = require('axios')
+const verifyAdmin = require('../verifyAdmin')
 
 const generateOtp = () => {
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -30,6 +31,22 @@ const sendOtp = async (otp, recipient) => {
     } catch (error) {
         console.error('Error sending SMS: ', error.response ? error.response.data : error.message);
         return false;
+    }
+}
+
+const changeAdminStatus = async (isAdmin, id, res) => {
+    try {
+        await User.findByIdAndUpdate(id, { $set: {isAdmin} })
+        res.send({
+            success: true,
+            msg: `Admin ${isAdmin ? 'added' : 'removed'} successfully`
+        })
+    } catch(err) {
+        console.log(err)
+        res.status(500).send({
+            success: false,
+            msg: "Something went wrong. Please try again"
+        })
     }
 }
 
@@ -191,6 +208,14 @@ router.put('/update-profile', verify, async (req, res) => {
             msg: "Something went wrong. Please try again"
         })
     }
+})
+
+router.post('/add-admin', verify, verifyAdmin, async (req, res) => {
+    changeAdminStatus(true, req.user._id, res);
+})
+
+router.post('/remove-admin', verify, verifyAdmin, async (req, res) => {
+    changeAdminStatus(false, req.user._id, res);
 })
 
 module.exports = router
