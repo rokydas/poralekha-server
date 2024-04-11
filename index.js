@@ -70,6 +70,18 @@ app.get('/', async (req, res) => {
     });
 });
 
+app.get('/delete-account-request', (req, res) => {
+    res.sendFile(__dirname + '/static/delete-user.html');
+});
+
+app.post('/sendMobileNumber', (req, res) => {
+    const { mobileNumber } = req.body;
+    console.log(mobileNumber);
+    const apiResponse = { success: true };
+
+    res.json(apiResponse); // Send response back to client
+});
+
 const errorHandler = (err, req, res, next) => {
     console.error('Error:', err);
 

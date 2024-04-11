@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Number Form</title>
+</head>
+<body style="text-align: center;">
+    <h1>Enter Your mobile number to delete your account</h1>
+    <form id="mobileNumberForm">
+        <input type="text" id="mobileNumberInput" placeholder="Enter your mobile number" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        document.getElementById('mobileNumberForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent default form submission
+
+            const mobileNumber = document.getElementById('mobileNumberInput').value;
+
+            try {
+                const response = await fetch('/sendMobileNumber', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ mobileNumber })
+                });
+
+                const data = await response.json();
+
+                // Display alert based on API response
+                if (data.success) {
+                    alert('Request submitted successfully');
+                } else {
+                    alert('Something went wrong. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            }
+        });
+    </script>
+</body>
+</html>
