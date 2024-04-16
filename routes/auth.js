@@ -34,14 +34,25 @@ const sendOtp = async (otp, recipient) => {
     }
 }
 
-const changeAdminStatus = async (isAdmin, id, res) => {
+const changeAdminStatus = async (isAdmin, req, res) => {
     try {
-        await User.findByIdAndUpdate(id, { $set: {isAdmin} })
-        res.send({
-            success: true,
-            msg: `Admin ${isAdmin ? 'added' : 'removed'} successfully`
-        })
-    } catch(err) {
+        const result = await User.findOneAndUpdate(
+            { mobileNumber: req.body.mobileNumber }, 
+            { $set: { isAdmin } }
+        )
+        if (result) {
+            res.send({
+                success: true,
+                msg: `Admin ${isAdmin ? 'added' : 'removed'} successfully`
+            })
+        } else {
+            res.send({
+                success: false,
+                msg: `Mobile Number not found`
+            })
+        }
+        
+    } catch (err) {
         console.log(err)
         res.status(500).send({
             success: false,
@@ -201,7 +212,7 @@ router.put('/update-profile', verify, async (req, res) => {
             success: true,
             msg: "Profile updated successfully"
         })
-    } catch(err) {
+    } catch (err) {
         console.log(err)
         res.status(400).send({
             success: false,
@@ -211,11 +222,11 @@ router.put('/update-profile', verify, async (req, res) => {
 })
 
 router.post('/add-admin', verify, verifyAdmin, async (req, res) => {
-    changeAdminStatus(true, req.user._id, res);
+    changeAdminStatus(true, req, res);
 })
 
 router.post('/remove-admin', verify, verifyAdmin, async (req, res) => {
-    changeAdminStatus(false, req.user._id, res);
+    changeAdminStatus(false, req, res);
 })
 
 module.exports = router
