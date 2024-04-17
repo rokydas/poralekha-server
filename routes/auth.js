@@ -188,7 +188,7 @@ router.get("/me", verify, async (req, res) => {
 router.get("/all", verify, async (req, res) => {
     let users = await User.find({})
     users = users.filter(user => {
-        if (user.email != req.user.email) return user
+        if (user.mobileNumber != req.user.mobileNumber) return user
     })
     if (users) {
         res.send({
