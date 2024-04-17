@@ -6,8 +6,11 @@ const jwt = require('jsonwebtoken')
 const { registerValidation, loginValidation, updateProfileValidation, verifyOtpValidation } = require('../validation/authValidation')
 const verify = require('../verifyToken')
 const mongoose = require('mongoose')
+const { MongoClient } = require('mongodb');
 const axios = require('axios')
 const verifyAdmin = require('../verifyAdmin')
+const MONGODB_URI = "mongodb+srv://easy-user:easy-password@cluster0.txrndhh.mongodb.net/poralekha-app?retryWrites=true&w=majority&appName=Cluster0";
+const client = new MongoClient(MONGODB_URI);
 
 const generateOtp = () => {
     const otp = Math.floor(100000 + Math.random() * 900000);
@@ -186,17 +189,29 @@ router.get("/me", verify, async (req, res) => {
 })
 
 router.get("/all", verify, async (req, res) => {
-    let users = await User.find({})
-    users = users.filter(user => {
-        if (user.mobileNumber != req.user.mobileNumber) return user
-    })
-    if (users) {
-        res.send({
-            success: true,
-            users
-        })
-    } else {
-        res.status(400).send({ success: false, msg: "There is no user" })
+    try {
+        const db = client.db('poralekha-app');
+        const collection = db.collection('users');
+
+        const page = parseInt(req.query.page) || 1;
+        const perPage = 10;
+        const skip = (page - 1) * perPage;
+
+        const totalItems = await collection.countDocuments();
+        const totalPages = Math.ceil(totalItems / perPage);
+
+        const data = await collection.find().skip(skip).limit(perPage).toArray();
+
+        res.json({
+            page: page,
+            perPageStudents: perPage,
+            totalStudents: totalItems,
+            totalPages: totalPages,
+            users: data
+        });
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 })
 
