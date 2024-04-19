@@ -58,7 +58,19 @@ const updateProfileValidation = (body) => {
     return error
 }
 
+const changePasswordValidation = (body) => {
+    const schema = Joi.object(
+        {
+            oldPassword: Joi.string().required(),
+            newPassword: Joi.string().required()
+        }
+    )
+    const {error} = schema.validate(body);
+    return error
+}
+
 module.exports.registerValidation = registerValidation
 module.exports.loginValidation = loginValidation
 module.exports.updateProfileValidation = updateProfileValidation
 module.exports.verifyOtpValidation = verifyOtpValidation
+module.exports.changePasswordValidation = changePasswordValidation

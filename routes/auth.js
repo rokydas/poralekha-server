@@ -3,7 +3,7 @@ const User = require('../model/userSchema')
 const OTP = require('../model/otpSchema')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const { registerValidation, loginValidation, updateProfileValidation, verifyOtpValidation } = require('../validation/authValidation')
+const { registerValidation, loginValidation, updateProfileValidation, verifyOtpValidation, changePasswordValidation } = require('../validation/authValidation')
 const verify = require('../verifyToken')
 const mongoose = require('mongoose')
 const { MongoClient } = require('mongodb');
@@ -232,6 +232,39 @@ router.put('/select-class', verify, async (req, res) => {
         res.send({
             success: true,
             msg: "Class added successfully"
+        })
+    } catch (err) {
+        console.log(err)
+        res.status(400).send({
+            success: false,
+            msg: "Something went wrong. Please try again"
+        })
+    }
+})
+
+router.put('/change-password', verify, async (req, res) => {
+    try {
+        const error = changePasswordValidation(req.body)
+        if (error) return res.status(400).send({
+            success: false,
+            msg: error.details[0].message
+        })
+        const user = await User.findOne({ mobileNumber: req.user.mobileNumber })
+        if (!user) return res.status(409).send({
+            success: false,
+            msg: "User not found"
+        })
+        const validPass = await bcrypt.compare(req.body.oldPassword, user.password)
+        if (!validPass) return res.status(400).send({
+            success: false,
+            msg: "Incorrect Old Password"
+        })
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassword = await bcrypt.hash(req.body.newPassword, salt)
+        await User.findByIdAndUpdate(req.user._id, { $set: {password: hashedPassword} })
+        res.send({
+            success: true,
+            msg: "Password updated successfully"
         })
     } catch (err) {
         console.log(err)
