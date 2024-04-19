@@ -94,7 +94,8 @@ router.post('/register', async (req, res) => {
             mobileNumber: req.body.mobileNumber
         });
         await otpDoc.save();
-        const smsResult = await sendOtp(otp, req.body.mobileNumber);
+        // const smsResult = await sendOtp(otp, req.body.mobileNumber);
+        const smsResult  = true;
         if (smsResult) {
             res.send({
                 success: true,
