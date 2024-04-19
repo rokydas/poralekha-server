@@ -40,7 +40,7 @@ const sendOtp = async (otp, recipient) => {
 const changeAdminStatus = async (isAdmin, req, res) => {
     try {
         const result = await User.findOneAndUpdate(
-            { mobileNumber: req.body.mobileNumber }, 
+            { mobileNumber: req.body.mobileNumber },
             { $set: { isAdmin } }
         )
         if (result) {
@@ -54,7 +54,7 @@ const changeAdminStatus = async (isAdmin, req, res) => {
                 msg: `Mobile Number not found`
             })
         }
-        
+
     } catch (err) {
         console.log(err)
         res.status(500).send({
@@ -138,6 +138,13 @@ router.post('/login', async (req, res) => {
         success: false,
         msg: "Incorrect Password"
     })
+
+    if (!user.isVerified) {
+        return res.status(400).send({
+            success: false,
+            msg: "User is not verified"
+        })
+    }
 
     // create and assign a token
     const token = jwt.sign({ _id: user._id, mobileNumber: user.mobileNumber }, process.env.TOKEN_SECRET)
@@ -228,7 +235,7 @@ router.put('/select-class', verify, async (req, res) => {
             success: false,
             msg: "Class not found"
         })
-        await User.findByIdAndUpdate(req.user._id, { $set: {class: req.body.class} })
+        await User.findByIdAndUpdate(req.user._id, { $set: { class: req.body.class } })
         res.send({
             success: true,
             msg: "Class added successfully"
@@ -261,7 +268,7 @@ router.put('/change-password', verify, async (req, res) => {
         })
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(req.body.newPassword, salt)
-        await User.findByIdAndUpdate(req.user._id, { $set: {password: hashedPassword} })
+        await User.findByIdAndUpdate(req.user._id, { $set: { password: hashedPassword } })
         res.send({
             success: true,
             msg: "Password updated successfully"
