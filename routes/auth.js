@@ -222,4 +222,24 @@ router.post('/remove-admin', verify, verifyAdmin, async (req, res) => {
     changeAdminStatus(false, req, res);
 })
 
+router.put('/select-class', verify, async (req, res) => {
+    try {
+        if (!req.body.class) return res.status(400).send({
+            success: false,
+            msg: "Class not found"
+        })
+        await User.findByIdAndUpdate(req.user._id, { $set: {class: req.body.class} })
+        res.send({
+            success: true,
+            msg: "Class added successfully"
+        })
+    } catch (err) {
+        console.log(err)
+        res.status(400).send({
+            success: false,
+            msg: "Something went wrong. Please try again"
+        })
+    }
+})
+
 module.exports = router
