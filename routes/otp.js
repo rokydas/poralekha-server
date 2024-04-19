@@ -2,6 +2,7 @@ const router = require('express').Router()
 const { verifyOtpValidation } = require('../validation/authValidation')
 const User = require('../model/userSchema')
 const OTP = require('../model/otpSchema')
+const jwt = require('jsonwebtoken')
 
 router.post('/verify-otp', async (req, res) => {
 
@@ -31,9 +32,21 @@ router.post('/verify-otp', async (req, res) => {
                 }
             }
             if (otpMatched) {
+                const user = await User.findOne({ mobileNumber: req.body.mobileNumber })
+                if (!user) return res.status(409).send({
+                    success: false,
+                    msg: "OTP matched. But user not found"
+                })
+
+                // create and assign a token
+                const token = jwt.sign({ _id: user._id, mobileNumber: user.mobileNumber }, process.env.TOKEN_SECRET)
+                delete user._doc.password
+
                 res.send({
                     success: true,
                     msg: "OTP Matched",
+                    user: user._doc,
+                    token
                 })
             } else {
                 res.status(400).json({

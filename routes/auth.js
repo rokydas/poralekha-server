@@ -154,28 +154,6 @@ router.post('/login', async (req, res) => {
     // res.send({msg: 'Logged in'})
 })
 
-router.post('/verify-otp', async (req, res) => {
-
-    // validation before checking otp
-    const error = verifyOtpValidation(req.body)
-    if (error) return res.status(400).send({
-        success: false,
-        msg: error.details[0].message
-    })
-
-    if (req.body.otp == "555555") {
-        res.send({
-            success: true,
-            msg: "Mobile number Verified",
-        })
-    } else {
-        res.status(400).send({
-            success: false,
-            msg: "Wrong OTP",
-        })
-    }
-})
-
 router.get("/me", verify, async (req, res) => {
     const user = await User.findOne({ _id: req.user._id })
     if (user) {
