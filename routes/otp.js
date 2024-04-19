@@ -3,6 +3,32 @@ const { verifyOtpValidation } = require('../validation/authValidation')
 const User = require('../model/userSchema')
 const OTP = require('../model/otpSchema')
 const jwt = require('jsonwebtoken')
+const axios = require('axios')
+
+const generateOtp = () => {
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    return otp.toString();
+};
+
+const sendOtp = async (otp, recipient) => {
+    try {
+        const response = await axios.post('https://login.esms.com.bd/api/v3/sms/send', {
+            recipient: `88${recipient}`,
+            sender_id: process.env.SENDER_ID,
+            type: 'plain',
+            message: `পড়ালেখা এপ এ OTP দিয়ে মোবাইল নাম্বার ভেরিফাই করে নিন। OTP: ${otp}`
+        }, {
+            headers: {
+                Authorization: `Bearer ${process.env.OTP_AUTH_TOKEN}`
+            }
+        });
+        console.log('SMS sent successfully: ', response.data);
+        return true;
+    } catch (error) {
+        console.error('Error sending SMS: ', error.response ? error.response.data : error.message);
+        return false;
+    }
+}
 
 router.post('/verify-otp', async (req, res) => {
 
@@ -58,6 +84,47 @@ router.post('/verify-otp', async (req, res) => {
             res.status(409).json({
                 success: false,
                 msg: "Time Error",
+            })
+        }
+    } catch(err) {
+        console.log(err)
+        res.status(500).json({
+            success: false,
+            msg: "Something went wrong",
+        })
+    }
+})
+
+router.post('/resend-otp', async (req, res) => {
+    try {
+        if (req.body.security != "qwerty") {
+            return res.status(404).json({
+                success: false,
+                msg: "Security key not found",
+            })
+        }
+        if (!req.body.mobileNumber) {
+            return res.status(404).json({
+                success: false,
+                msg: "Mobile number not found",
+            })
+        }
+        const otp = generateOtp();
+        const otpDoc = new OTP({
+            otp,
+            mobileNumber: req.body.mobileNumber
+        });
+        await otpDoc.save();
+        const smsResult = await sendOtp(otp, req.body.mobileNumber);
+        if (smsResult) {
+            res.send({
+                success: true,
+                msg: "OTP sent"
+            })
+        } else {
+            res.status(500).json({
+                success: false,
+                msg: "Something went wrong. Resend again",
             })
         }
     } catch(err) {
