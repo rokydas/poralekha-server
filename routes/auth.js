@@ -147,8 +147,8 @@ router.post('/login', async (req, res) => {
                 mobileNumber: req.body.mobileNumber
             });
             await otpDoc.save();
-            const smsResult = await sendOtp(otp, req.body.mobileNumber);
-            // const smsResult = true;
+            // const smsResult = await sendOtp(otp, req.body.mobileNumber);
+            const smsResult = true;
             if (smsResult) {
                 return res.send({
                     success: true,
