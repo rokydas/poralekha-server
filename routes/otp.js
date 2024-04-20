@@ -21,7 +21,7 @@ const sendOtp = async (otp, recipient) => {
             headers: {
                 Authorization: `Bearer ${process.env.OTP_AUTH_TOKEN}`
             }
-        }).then(response => console.log(response))
+        }).then(response => console.log(response.data))
         .catch(err => console.log(err))
     } catch (error) {
         console.error('Error sending SMS: ', error.response ? error.response.data : error.message);
@@ -115,17 +115,10 @@ router.post('/resend-otp', async (req, res) => {
         });
         await otpDoc.save();
         sendOtp(otp, req.body.mobileNumber);
-        if (smsResult) {
-            res.send({
-                success: true,
-                msg: "OTP sent"
-            })
-        } else {
-            res.status(500).json({
-                success: false,
-                msg: "Something went wrong. Resend again",
-            })
-        }
+        res.send({
+            success: true,
+            msg: "OTP"
+        })
     } catch(err) {
         console.log(err)
         res.status(500).json({
