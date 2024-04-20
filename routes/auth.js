@@ -94,8 +94,7 @@ router.post('/register', async (req, res) => {
             mobileNumber: req.body.mobileNumber
         });
         await otpDoc.save();
-        // const smsResult = await sendOtp(otp, req.body.mobileNumber);
-        const smsResult  = true;
+        const smsResult = await sendOtp(otp, req.body.mobileNumber);
         if (smsResult) {
             res.send({
                 success: true,
@@ -141,10 +140,24 @@ router.post('/login', async (req, res) => {
     })
 
     if (!user.isVerified) {
-        return res.status(400).send({
-            success: false,
-            msg: "User is not verified"
-        })
+        const otp = generateOtp();
+        const otpDoc = new OTP({
+            otp,
+            mobileNumber: req.body.mobileNumber
+        });
+        await otpDoc.save();
+        const smsResult = await sendOtp(otp, req.body.mobileNumber);
+        if (smsResult) {
+            return res.send({
+                success: true,
+                msg: "Your account is not verified yet"
+            })
+        } else {
+            return res.status(500).send({
+                success: false,
+                msg: "Something went wrong"
+            })
+        }
     }
 
     // create and assign a token
