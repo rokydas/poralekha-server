@@ -94,7 +94,6 @@ const errorHandler = (err, req, res, next) => {
 app.use(errorHandler);
 
 // Start the server
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
-    server.setTimeout(120000);
 });
