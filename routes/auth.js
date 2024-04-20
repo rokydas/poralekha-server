@@ -118,58 +118,67 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
 
-    // validation before logging in user
-    const error = loginValidation(req.body)
-    if (error) return res.status(400).send({
-        success: false,
-        msg: error.details[0].message
-    })
+    try {
+        // validation before logging in user
+        const error = loginValidation(req.body)
+        if (error) return res.status(400).send({
+            success: false,
+            msg: error.details[0].message
+        })
 
-    // checking if the user's mobile number exists in the db
-    const user = await User.findOne({ mobileNumber: req.body.mobileNumber })
-    if (!user) return res.status(409).send({
-        success: false,
-        msg: "User not found"
-    })
+        // checking if the user's mobile number exists in the db
+        const user = await User.findOne({ mobileNumber: req.body.mobileNumber })
+        if (!user) return res.status(409).send({
+            success: false,
+            msg: "User not found"
+        })
 
-    // password checking
-    const validPass = await bcrypt.compare(req.body.password, user.password)
-    if (!validPass) return res.status(400).send({
-        success: false,
-        msg: "Incorrect Password"
-    })
+        // password checking
+        const validPass = await bcrypt.compare(req.body.password, user.password)
+        if (!validPass) return res.status(400).send({
+            success: false,
+            msg: "Incorrect Password"
+        })
 
-    if (!user.isVerified) {
-        const otp = generateOtp();
-        const otpDoc = new OTP({
-            otp,
-            mobileNumber: req.body.mobileNumber
-        });
-        await otpDoc.save();
-        const smsResult = await sendOtp(otp, req.body.mobileNumber);
-        if (smsResult) {
-            return res.send({
-                success: true,
-                msg: "Your account is not verified yet"
-            })
-        } else {
-            return res.status(500).send({
-                success: false,
-                msg: "Something went wrong"
-            })
+        if (!user.isVerified) {
+            const otp = generateOtp();
+            const otpDoc = new OTP({
+                otp,
+                mobileNumber: req.body.mobileNumber
+            });
+            await otpDoc.save();
+            const smsResult = await sendOtp(otp, req.body.mobileNumber);
+            // const smsResult = true;
+            if (smsResult) {
+                return res.send({
+                    success: true,
+                    msg: "Your account is not verified yet"
+                })
+            } else {
+                return res.status(500).send({
+                    success: false,
+                    msg: "Something went wrong"
+                })
+            }
         }
-    }
 
-    // create and assign a token
-    const token = jwt.sign({ _id: user._id, mobileNumber: user.mobileNumber }, process.env.TOKEN_SECRET)
-    // res.header('auth-token', token).send(user)
-    delete user._doc.password
-    res.send({
-        success: true,
-        msg: "Login successful",
-        user: user._doc,
-        token
-    })
+        // create and assign a token
+        const token = jwt.sign({ _id: user._id, mobileNumber: user.mobileNumber }, process.env.TOKEN_SECRET)
+        // res.header('auth-token', token).send(user)
+        delete user._doc.password
+        res.send({
+            success: true,
+            msg: "Login successful",
+            user: user._doc,
+            token
+        })
+    } catch(err) {
+        console.log(err)
+        res.status(500).send({
+            success: false,
+            msg: "Something went wrong. Please try again."
+        })
+    }
 
     // successful login
     // res.send({msg: 'Logged in'})
