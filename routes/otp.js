@@ -12,7 +12,7 @@ const generateOtp = () => {
 
 const sendOtp = async (otp, recipient) => {
     try {
-        const response = await axios.post('https://login.esms.com.bd/api/v3/sms/send', {
+        axios.post('https://login.esms.com.bd/api/v3/sms/send', {
             recipient: `88${recipient}`,
             sender_id: process.env.SENDER_ID,
             type: 'plain',
@@ -21,9 +21,8 @@ const sendOtp = async (otp, recipient) => {
             headers: {
                 Authorization: `Bearer ${process.env.OTP_AUTH_TOKEN}`
             }
-        });
-        console.log('SMS sent successfully: ', response.data);
-        return true;
+        }).then(response => console.log(response))
+        .catch(err => console.log(err))
     } catch (error) {
         console.error('Error sending SMS: ', error.response ? error.response.data : error.message);
         return false;
@@ -115,7 +114,7 @@ router.post('/resend-otp', async (req, res) => {
             mobileNumber: req.body.mobileNumber
         });
         await otpDoc.save();
-        const smsResult = await sendOtp(otp, req.body.mobileNumber);
+        sendOtp(otp, req.body.mobileNumber);
         if (smsResult) {
             res.send({
                 success: true,
