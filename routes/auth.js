@@ -12,31 +12,6 @@ const verifyAdmin = require('../verifyAdmin')
 const MONGODB_URI = "mongodb+srv://easy-user:easy-password@cluster0.txrndhh.mongodb.net/poralekha-app?retryWrites=true&w=majority&appName=Cluster0";
 const client = new MongoClient(MONGODB_URI);
 
-const generateOtp = () => {
-    const otp = Math.floor(100000 + Math.random() * 900000);
-    return otp.toString();
-};
-
-const sendOtp = async (otp, recipient) => {
-    try {
-        const response = await axios.post('https://login.esms.com.bd/api/v3/sms/send', {
-            recipient: `88${recipient}`,
-            sender_id: process.env.SENDER_ID,
-            type: 'plain',
-            message: `পড়ালেখা এপ এ OTP দিয়ে মোবাইল নাম্বার ভেরিফাই করে নিন। OTP: ${otp}`
-        }, {
-            headers: {
-                Authorization: `Bearer ${process.env.OTP_AUTH_TOKEN}`
-            }
-        });
-        console.log('SMS sent successfully: ', response.data);
-        return true;
-    } catch (error) {
-        console.error('Error sending SMS: ', error.response ? error.response.data : error.message);
-        return false;
-    }
-}
-
 const changeAdminStatus = async (isAdmin, req, res) => {
     try {
         const result = await User.findOneAndUpdate(
@@ -88,25 +63,10 @@ router.post('/register', async (req, res) => {
     const user = new User({ ...req.body, password: hashedPassword })
     try {
         await user.save()
-        const otp = generateOtp();
-        const otpDoc = new OTP({
-            otp,
-            mobileNumber: req.body.mobileNumber
-        });
-        await otpDoc.save();
-        const smsResult = await sendOtp(otp, req.body.mobileNumber);
-        if (smsResult) {
-            res.send({
-                success: true,
-                msg: "Registration successful",
-            })
-        } else {
-            await User.findOneAndDelete({ mobileNumber: req.body.mobileNumber })
-            res.status(500).send({
-                success: false,
-                msg: "Something went wrong. Please try again."
-            })
-        }
+        res.send({
+            success: true,
+            msg: "Registration successful",
+        })
     } catch (err) {
         console.log(err)
         res.status(500).send({
@@ -141,25 +101,10 @@ router.post('/login', async (req, res) => {
         })
 
         if (!user.isVerified) {
-            const otp = generateOtp();
-            const otpDoc = new OTP({
-                otp,
-                mobileNumber: req.body.mobileNumber
-            });
-            await otpDoc.save();
-            // const smsResult = await sendOtp(otp, req.body.mobileNumber);
-            const smsResult = true;
-            if (smsResult) {
-                return res.send({
-                    success: true,
-                    msg: "Your account is not verified yet"
-                })
-            } else {
-                return res.status(500).send({
-                    success: false,
-                    msg: "Something went wrong"
-                })
-            }
+            return res.send({
+                success: true,
+                msg: "Your account is not verified yet"
+            })
         }
 
         // create and assign a token
