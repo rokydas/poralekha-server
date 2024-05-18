@@ -36,7 +36,7 @@ app.get('/api/data', async (req, res) => {
     if (req.query.password == "qwerty") {
         try {
             const db = client.db('poralekha-app');
-            const collection = db.collection('students');
+            const collection = db.collection('users');
 
             const page = parseInt(req.query.page) || 1;
             const perPage = 10;
